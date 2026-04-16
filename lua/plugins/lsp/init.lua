@@ -84,10 +84,34 @@ return {
             Lua = {},
           },
         },
+        omnisharp = {
+          cmd = {
+            'omnisharp',
+            '-z',
+            '--hostPID',
+            tostring(vim.fn.getpid()),
+            'DotNet:enablePackageRestore=false',
+            '--encoding',
+            'utf-8',
+            '--languageserver',
+          },
+          settings = {
+            FormattingOptions = {
+              EnableEditorConfigSupport = true,
+            },
+            RoslynExtensionsOptions = {
+              EnableAnalyzersSupport = true,
+              EnableDecompilationSupport = true,
+              EnableImportCompletion = true,
+            },
+            Sdk = {
+              IncludePrereleases = true,
+            },
+          },
+        },
       }
 
       local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {})
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
