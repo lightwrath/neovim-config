@@ -63,8 +63,9 @@ rtp:prepend(lazypath)
 -- [[ Configure and install plugins ]]
 require('lazy').setup({
   { import = 'plugins.editor' },
+  { import = 'plugins.oil' },
   { import = 'plugins.git' },
-  { import = 'plugins.navigation' },
+  { import = 'plugins.telescope' },
   { import = 'plugins.lsp' },
   { import = 'plugins.completion' },
   { import = 'plugins.ui' },
