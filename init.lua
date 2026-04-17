@@ -66,6 +66,7 @@ require('lazy').setup({
   { import = 'plugins.oil' },
   { import = 'plugins.git' },
   { import = 'plugins.telescope' },
+  { import = 'plugins.test' },
   { import = 'plugins.lsp' },
   { import = 'plugins.completion' },
   { import = 'plugins.ui' },
