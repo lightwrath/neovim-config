@@ -14,6 +14,8 @@ return {
       { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
+      local blink = require 'blink.cmp'
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -112,10 +114,12 @@ return {
       }
 
       local ensure_installed = vim.tbl_keys(servers or {})
+      local capabilities = blink.get_lsp_capabilities()
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       for name, server in pairs(servers) do
+        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
         vim.lsp.config(name, server)
         vim.lsp.enable(name)
       end

@@ -25,6 +25,7 @@ return {
         nerd_font_variant = 'mono',
       },
       completion = {
+        ghost_text = { enabled = true },
         documentation = { auto_show = false, auto_show_delay_ms = 500 },
       },
       sources = {
