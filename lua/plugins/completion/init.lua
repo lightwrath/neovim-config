@@ -20,6 +20,7 @@ return {
     opts = {
       keymap = {
         preset = 'default',
+        ['<Tab>'] = { 'select_and_accept', 'snippet_forward', 'fallback' },
       },
       appearance = {
         nerd_font_variant = 'mono',
