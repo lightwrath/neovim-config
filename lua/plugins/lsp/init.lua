@@ -15,6 +15,76 @@ return {
     },
     config = function()
       local blink = require 'blink.cmp'
+      local lspMethods = vim.lsp.protocol.Methods
+
+      local pendingDiagnosticRefreshes = {}
+      local pendingBufferRefreshes = {}
+
+      local refresh_buffer_diagnostics = function(bufnr)
+        if not vim.api.nvim_buf_is_valid(bufnr) or not vim.api.nvim_buf_is_loaded(bufnr) then return end
+
+        pendingBufferRefreshes[bufnr] = nil
+
+        for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
+          if client:supports_method(lspMethods.textDocument_diagnostic, bufnr) then
+            vim.lsp.util._refresh(lspMethods.textDocument_diagnostic, {
+              bufnr = bufnr,
+              client_id = client.id,
+            })
+          elseif client:supports_method(lspMethods.textDocument_didOpen, bufnr) then
+            vim.lsp.buf_detach_client(bufnr, client.id)
+
+            if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
+              vim.lsp.buf_attach_client(bufnr, client.id)
+            end
+          end
+        end
+      end
+
+      local refresh_client_diagnostics = function(clientId)
+        local client = vim.lsp.get_client_by_id(clientId)
+        if not client or not client:supports_method(lspMethods.textDocument_diagnostic) then return end
+
+        pendingDiagnosticRefreshes[clientId] = nil
+
+        for bufnr in pairs(client.attached_buffers) do
+          if vim.api.nvim_buf_is_loaded(bufnr) then
+            vim.lsp.util._refresh(lspMethods.textDocument_diagnostic, {
+              bufnr = bufnr,
+              client_id = clientId,
+            })
+          end
+        end
+      end
+
+      vim.api.nvim_create_autocmd('LspNotify', {
+        group = vim.api.nvim_create_augroup('kickstart-lsp-refresh-all-tabs', { clear = true }),
+        callback = function(event)
+          if
+            event.data.method ~= lspMethods.textDocument_didChange
+            and event.data.method ~= lspMethods.textDocument_didOpen
+          then
+            return
+          end
+
+          local clientId = event.data.client_id
+          if not clientId or pendingDiagnosticRefreshes[clientId] then return end
+
+          pendingDiagnosticRefreshes[clientId] = true
+          vim.defer_fn(function() refresh_client_diagnostics(clientId) end, 75)
+        end,
+      })
+
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'TabEnter' }, {
+        group = vim.api.nvim_create_augroup('kickstart-lsp-refresh-current-buffer', { clear = true }),
+        callback = function(event)
+          local bufnr = event.buf
+          if pendingBufferRefreshes[bufnr] or vim.tbl_isempty(vim.lsp.get_clients { bufnr = bufnr }) then return end
+
+          pendingBufferRefreshes[bufnr] = true
+          vim.defer_fn(function() refresh_buffer_diagnostics(bufnr) end, 50)
+        end,
+      })
 
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
