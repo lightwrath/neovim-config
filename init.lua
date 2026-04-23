@@ -25,6 +25,8 @@ vim.o.scrolloff = 10 -- Minimal number of screen lines to keep above and below t
 vim.o.confirm = true -- Show dialog one failed operation (:q with unsaved changes = dialog prompt)
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>') -- Clear highlights on search when pressing <Esc> in normal mode
 
+local dotnet = require 'utils.dotnet'
+
 -- [[ Keymaps ]] --
 vim.diagnostic.config {
   update_in_insert = false,
@@ -41,6 +43,9 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<leader>ps', dotnet.open_user_secrets, { desc = 'Open project [S]ecrets' })
+
+vim.api.nvim_create_user_command('DotnetUserSecrets', dotnet.open_user_secrets, { desc = 'Open .NET user secrets' })
 
 vim.api.nvim_create_autocmd('TextYankPost', { -- Highlight when yanking (copying) text
   desc = 'Highlight when yanking (copying) text',
