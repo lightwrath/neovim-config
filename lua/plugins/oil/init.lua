@@ -10,6 +10,10 @@ return {
         vim.cmd.tabnew()
         require('oil').open()
       end, { desc = 'Open file explorer' })
+
+      vim.keymap.set('n', '<leader>E', function()
+        require('oil').open()
+      end, { desc = 'Open file explorer in current tab' })
     end,
     ---@module 'oil'
     ---@type oil.SetupOpts
