@@ -1,38 +1,44 @@
-return {
-  { 'NMAC427/guess-indent.nvim', opts = {} },
+local function formatCsharpBuffer(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if vim.bo[bufnr].filetype ~= 'cs' then return end
 
-  {
-    'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
-    cmd = { 'ConformInfo' },
-    keys = {
-      {
-        '<leader>f',
-        function() require('conform').format { async = true, lsp_format = 'fallback' } end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    ---@module 'conform'
-    ---@type conform.setupOpts
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
-        end
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-      },
-    },
-  },
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+  if filename == '' then return end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local text = table.concat(lines, '\n') .. '\n'
+  local configPath = vim.fn.stdpath 'config' .. '/.csharpierrc'
+  local result = vim.system({ 'csharpier', 'format', '--config-path', configPath, '--stdin-path', filename }, { stdin = text, text = true }):wait()
+
+  if result.code ~= 0 then
+    vim.notify(result.stderr ~= '' and result.stderr or 'CSharpier formatting failed', vim.log.levels.ERROR)
+    return
+  end
+
+  local formatted = vim.split(result.stdout, '\n', { plain = true })
+  if formatted[#formatted] == '' then table.remove(formatted) end
+
+  local view = vim.fn.winsaveview()
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted)
+  vim.fn.winrestview(view)
+end
+
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*.cs',
+  callback = function(event) formatCsharpBuffer(event.buf) end,
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'cs',
+  callback = function(event)
+    vim.keymap.set('x', '=', function()
+      vim.api.nvim_feedkeys(vim.keycode '<Esc>', 'n', false)
+      vim.schedule(function() formatCsharpBuffer(event.buf) end)
+    end, { buffer = event.buf, desc = 'Format C# buffer' })
+  end,
+})
+
+return {
 
   {
     'folke/todo-comments.nvim',

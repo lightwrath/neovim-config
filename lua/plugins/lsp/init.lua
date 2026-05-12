@@ -170,6 +170,9 @@ return {
           settings = {
             FormattingOptions = {
               EnableEditorConfigSupport = true,
+              IndentationSize = 4,
+              TabSize = 4,
+              UseTabs = false,
             },
             RoslynExtensionsOptions = {
               EnableAnalyzersSupport = true,
@@ -188,6 +191,8 @@ return {
       }
 
       local ensure_installed = vim.tbl_keys(servers or {})
+      table.insert(ensure_installed, 'netcoredbg')
+      table.insert(ensure_installed, 'csharpier')
       local capabilities = blink.get_lsp_capabilities()
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }

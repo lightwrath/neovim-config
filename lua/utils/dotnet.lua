@@ -1,7 +1,7 @@
 local M = {}
 
-local function notify(message, level)
-  vim.notify(message, level or vim.log.levels.ERROR, { title = '.NET User Secrets' })
+local function notify(message, level, title)
+  vim.notify(message, level or vim.log.levels.ERROR, { title = title or '.NET User Secrets' })
 end
 
 local function normalize(path)
@@ -104,6 +104,99 @@ function M.resolve_user_secrets_id(project)
   if userSecretsId == '' then return nil, 'The current project does not define a UserSecretsId' end
 
   return userSecretsId
+end
+
+function M.build_project(project)
+  if vim.fn.executable 'dotnet' ~= 1 then return nil, '`dotnet` is not available in PATH' end
+
+  notify('Building ' .. vim.fn.fnamemodify(project, ':t'), vim.log.levels.INFO, '.NET Debug')
+
+  local result = vim.system({
+    'dotnet',
+    'build',
+    project,
+    '-c',
+    'Debug',
+  }, { text = true }):wait()
+
+  if result.code == 0 then return true end
+
+  local stderr = vim.trim(result.stderr or '')
+  local stdout = vim.trim(result.stdout or '')
+  local message = stderr ~= '' and stderr or stdout
+  if message == '' then message = 'dotnet build failed for ' .. project end
+
+  return nil, message
+end
+
+function M.resolve_target_path(project)
+  if vim.fn.executable 'dotnet' ~= 1 then return nil, '`dotnet` is not available in PATH' end
+
+  local result = vim.system({
+    'dotnet',
+    'msbuild',
+    project,
+    '--getProperty:TargetPath',
+    '-nologo',
+    '-p:Configuration=Debug',
+  }, { text = true }):wait()
+
+  if result.code ~= 0 then
+    local stderr = vim.trim(result.stderr or '')
+    if stderr == '' then stderr = 'dotnet msbuild failed while resolving TargetPath' end
+    return nil, stderr
+  end
+
+  local targetPath = normalize(vim.trim(result.stdout or ''))
+  if targetPath == '' then return nil, 'The current project did not produce a Debug TargetPath' end
+  if vim.fn.filereadable(targetPath) == 0 then return nil, 'Debug target could not be found: ' .. targetPath end
+
+  return targetPath
+end
+
+function M.resolve_output_type(project)
+  if vim.fn.executable 'dotnet' ~= 1 then return nil, '`dotnet` is not available in PATH' end
+
+  local result = vim.system({
+    'dotnet',
+    'msbuild',
+    project,
+    '--getProperty:OutputType',
+    '-nologo',
+    '-p:Configuration=Debug',
+  }, { text = true }):wait()
+
+  if result.code ~= 0 then
+    local stderr = vim.trim(result.stderr or '')
+    if stderr == '' then stderr = 'dotnet msbuild failed while resolving OutputType' end
+    return nil, stderr
+  end
+
+  local outputType = vim.trim(result.stdout or '')
+  if outputType == '' then return nil, 'The current project did not define an OutputType' end
+
+  return outputType
+end
+
+function M.resolve_debug_target()
+  local project, projectError = M.resolve_project()
+  if not project then return nil, projectError end
+
+  local outputType, outputTypeError = M.resolve_output_type(project)
+  if not outputType then return nil, outputTypeError end
+  if outputType ~= 'Exe' and outputType ~= 'WinExe' then return nil, 'The resolved project is not executable: ' .. project end
+
+  local built, buildError = M.build_project(project)
+  if not built then return nil, buildError end
+
+  local targetPath, targetError = M.resolve_target_path(project)
+  if not targetPath then return nil, targetError end
+
+  return {
+    project = project,
+    cwd = dirname(project),
+    program = targetPath,
+  }
 end
 
 function M.get_secrets_path(userSecretsId)

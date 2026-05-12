@@ -9,6 +9,10 @@ vim.o.mouse = 'a' -- Enable mouse mode (split resizing)
 vim.o.showmode = false -- Already in status bar
 vim.schedule(function() vim.o.clipboard = 'unnamedplus' end) -- Sync clipboard with OS
 vim.o.breakindent = true -- Indentation
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.softtabstop = 4
+vim.o.expandtab = true
 vim.o.undofile = true --undo/redo after closing and reopening file
 vim.o.ignorecase = true -- For searching
 vim.o.smartcase = true
@@ -18,7 +22,7 @@ vim.o.timeoutlen = 300
 vim.o.splitright = true
 vim.o.splitbelow = true
 vim.o.list = true -- For whitespace character displays
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = '» ', leadmultispace = '»   ', trail = '·', nbsp = '␣' }
 vim.o.inccommand = 'split' -- Preview substitutions live, as you type!
 vim.o.cursorline = true -- Show which line your cursor is on
 vim.o.scrolloff = 10 -- Minimal number of screen lines to keep above and below the cursor.
@@ -72,6 +76,7 @@ require('lazy').setup({
   { import = 'plugins.git' },
   { import = 'plugins.telescope' },
   { import = 'plugins.test' },
+  { import = 'plugins.debug' },
   { import = 'plugins.lsp' },
   { import = 'plugins.completion' },
   { import = 'plugins.ui' },

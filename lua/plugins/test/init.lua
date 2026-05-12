@@ -47,7 +47,11 @@ return {
     config = function()
       require('neotest').setup {
         adapters = {
-          require('neotest-dotnet'),
+          require('neotest-dotnet') {
+            dap = {
+              adapter_name = 'netcoredbg',
+            },
+          },
         },
         output_panel = {
           open = false,
