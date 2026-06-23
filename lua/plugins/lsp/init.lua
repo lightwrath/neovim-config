@@ -128,6 +128,8 @@ return {
         end,
       })
 
+      local omnisharpCommand = vim.fn.executable 'omnisharp' == 1 and 'omnisharp' or 'OmniSharp'
+
       ---@type table<string, vim.lsp.Config>
       local servers = {
         stylua = {},
@@ -158,7 +160,7 @@ return {
         },
         omnisharp = {
           cmd = {
-            'omnisharp',
+            omnisharpCommand,
             '-z',
             '--hostPID',
             tostring(vim.fn.getpid()),
