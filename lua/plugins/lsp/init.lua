@@ -27,10 +27,7 @@ return {
 
         for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
           if client:supports_method(lspMethods.textDocument_diagnostic, bufnr) then
-            vim.lsp.util._refresh(lspMethods.textDocument_diagnostic, {
-              bufnr = bufnr,
-              client_id = client.id,
-            })
+            vim.lsp.diagnostic._refresh(bufnr, client.id)
           elseif client:supports_method(lspMethods.textDocument_didOpen, bufnr) then
             vim.lsp.buf_detach_client(bufnr, client.id)
 
@@ -49,10 +46,7 @@ return {
 
         for bufnr in pairs(client.attached_buffers) do
           if vim.api.nvim_buf_is_loaded(bufnr) then
-            vim.lsp.util._refresh(lspMethods.textDocument_diagnostic, {
-              bufnr = bufnr,
-              client_id = clientId,
-            })
+            vim.lsp.diagnostic._refresh(bufnr, clientId)
           end
         end
       end
@@ -187,6 +181,7 @@ return {
           },
         },
         ts_ls = {},
+        eslint = {},
         jsonls = {},
         html = {},
         cssls = {},
